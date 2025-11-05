@@ -1,0 +1,8 @@
+﻿# Config file for the ReactorMQ package
+
+include(CMakeFindDependencyMacro)
+
+# Import the targets from the install tree
+include(${CMAKE_CURRENT_LIST_DIR}/reactormqTargets.cmake)
+
+set(reactormq_FOUND TRUE)
