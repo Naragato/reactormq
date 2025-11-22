@@ -138,6 +138,13 @@ if (REACTORMQ_PLATFORM_NX)
 endif ()
 option(REACTORMQ_WITH_SOCKET_POLYFILL "Enable BSD socket polyfill header" ${_DEF_WITH_SOCKET_POLYFILL})
 
+option(ENABLE_TSAN "Enable ThreadSanitizer" OFF)
+
+if(ENABLE_TSAN)
+    add_compile_options(-fsanitize=thread -g -O1)
+    add_link_options(-fsanitize=thread)
+endif()
+
 # --------------------------------------------------------------------------------------
 # OpenSSL Integration
 set(REACTORMQ_SSL_AVAILABLE FALSE)

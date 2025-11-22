@@ -46,9 +46,8 @@ namespace reactormq::mqtt::client {
 
             REACTORMQ_LOG(
                 logging::LogLevel::Debug,
-                "Reactor::enqueueCommand() queued command (queueSize=%zu, state=%s)",
-                m_commandQueue.size(),
-                m_currentState ? m_currentState->getStateName() : "None");
+                "Reactor::enqueueCommand() queued command (queueSize=%zu)",
+                m_commandQueue.size());
         }
     }
 
