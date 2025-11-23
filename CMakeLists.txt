@@ -8,6 +8,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
+include(Sanitizers)
+
 # --------------------------------------------------------------------------------------
 # Platform Detection
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
@@ -138,13 +140,6 @@ if (REACTORMQ_PLATFORM_NX)
 endif ()
 option(REACTORMQ_WITH_SOCKET_POLYFILL "Enable BSD socket polyfill header" ${_DEF_WITH_SOCKET_POLYFILL})
 
-option(ENABLE_TSAN "Enable ThreadSanitizer" OFF)
-
-if(ENABLE_TSAN)
-    add_compile_options(-fsanitize=thread -g -O1)
-    add_link_options(-fsanitize=thread)
-endif()
-
 # --------------------------------------------------------------------------------------
 # OpenSSL Integration
 set(REACTORMQ_SSL_AVAILABLE FALSE)
@@ -167,7 +162,7 @@ elseif (REACTORMQ_SSL_PROVIDER STREQUAL "libressl")
 
     set(ENABLE_EXTRAS OFF CACHE BOOL "" FORCE)
     set(ENABLE_TESTS OFF CACHE BOOL "" FORCE)
-    set(LIBRESSL_TESTS  OFF CACHE BOOL "" FORCE)
+    set(LIBRESSL_TESTS OFF CACHE BOOL "" FORCE)
     set(LIBRESSL_APPS OFF CACHE BOOL "" FORCE)
     set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 
@@ -540,7 +535,7 @@ target_link_libraries(reactormq
         $<$<AND:$<BOOL:${REACTORMQ_PLATFORM_WINDOWS_FAMILY}>,$<BOOL:${REACTORMQ_PLATFORM_WINDOWS}>>:ws2_32>
 )
 
-if(REACTORMQ_PLATFORM_DARWIN_FAMILY)
+if (REACTORMQ_PLATFORM_DARWIN_FAMILY)
     find_library(SECURITY_FRAMEWORK Security)
     find_library(COREFOUNDATION_FRAMEWORK CoreFoundation)
 
@@ -555,7 +550,7 @@ if(REACTORMQ_PLATFORM_DARWIN_FAMILY)
             -framework CoreFoundation
             -framework Security
     )
-endif()
+endif ()
 
 if (REACTORMQ_WITH_THREADS)
     find_package(Threads REQUIRED)
@@ -602,6 +597,8 @@ elseif (CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
     endif ()
     target_compile_options(reactormq PRIVATE -fvisibility=hidden -fvisibility-inlines-hidden)
 endif ()
+
+reactormq_add_sanitizers(reactormq)
 
 # --------------------------------------------------------------------------------------
 # Tests

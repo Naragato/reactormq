@@ -30,6 +30,7 @@ macro(setup_test_target target_name sources)
         target_compile_options(${target_name} PRIVATE -fexceptions -frtti)
     endif ()
 
+    reactormq_add_sanitizers(${target_name})
 
     include(GoogleTest)
     if (WIN32 AND (CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU"))
@@ -58,9 +59,12 @@ if (ALL_TEST_SOURCES)
     setup_test_target(reactormq_tests "${ALL_TEST_SOURCES}")
 endif()
 
+reactormq_disable_msan_for_targets(gtest gtest_main ssl crypto tls)
+
 file(GLOB_RECURSE UNIT_TEST_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/unit/*.cpp")
-if (UNIT_TEST_SOURCES)
-    setup_test_target(unit_tests "${UNIT_TEST_SOURCES};${TEST_COMMON_SOURCES}")
+file(GLOB_RECURSE MEMORY_TEST_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/memory/*.cpp")
+if (UNIT_TEST_SOURCES OR MEMORY_TEST_SOURCES)
+    setup_test_target(unit_tests "${UNIT_TEST_SOURCES};${MEMORY_TEST_SOURCES};${TEST_COMMON_SOURCES}")
 endif()
 
 file(GLOB_RECURSE INTEGRATION_TEST_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/integration/*.cpp")
