@@ -71,3 +71,5 @@ file(GLOB_RECURSE INTEGRATION_TEST_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SO
 if (INTEGRATION_TEST_SOURCES)
     setup_test_target(integration_tests "${INTEGRATION_TEST_SOURCES};${TEST_COMMON_SOURCES}")
 endif()
+
+setup_test_target(stress_tests "stress/test_concurrent_commands.cpp;${TEST_COMMON_SOURCES}")
