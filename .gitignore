@@ -1,0 +1,165 @@
+﻿# Top-level .gitignore for reactormq
+# Covers OS cruft, multiple IDEs, and common C/C++ build artifacts
+
+# --- OS / File system noise ---
+.DS_Store
+.DS_Store?
+.AppleDouble
+.LSOverride
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+Icon?
+
+# --- Archives / packages (keep out by default) ---
+*.zip
+*.7z
+*.tar
+*.gz
+*.bz2
+*.xz
+*.tgz
+*.rar
+
+# --- Editors / IDEs ---
+# JetBrains (CLion, etc.)
+.idea/
+*.iml
+*.ipr
+*.iws
+cmake-build-*/
+
+# Visual Studio / MSBuild
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.VC.db
+*.VC.opendb
+*.ipch/
+*.opendb
+
+# Visual Studio Code
+.vscode/
+.history/
+
+# Xcode
+*.xcworkspace/
+*.xcodeproj/
+*.xcuserdatad/
+*.xcuserdata/
+*.xcuserstate
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+
+# Eclipse / CDT
+.project
+.cproject
+.settings/
+
+# Qt Creator
+CMakeLists.txt.user
+*.user
+*.user.*
+*.pro.user*
+*.qbs.user*
+
+# --- Build systems ---
+# Generic outputs
+[Bb]uild/
+[Bb]uilds/
+[bB]in/
+[oO]bj/
+out/
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+CMakeScripts/
+CMakeTmp/
+cmake_install.cmake
+CTestTestfile.cmake
+Makefile
+install_manifest.txt
+compile_commands.json
+
+# Ninja
+.ninja_deps
+.ninja_log
+
+# Visual Studio build folders
+Debug*/
+Release*/
+RelWithDebInfo*/
+MinSizeRel*/
+x64/
+x86/
+ARM*/
+ARM64*/
+
+# Package managers (optional; uncomment if used)
+# .conan/
+# conanbuildinfo.*
+# conaninfo.txt
+# vcpkg_installed/
+# packages/
+
+# --- Logs / caches / temps ---
+*.log
+*.tlog
+*.cache
+*.tmp
+*.temp
+*.swp
+*.swo
+*.orig
+*.bak
+*.bk
+
+# --- Coverage / analysis ---
+*.gcda
+*.gcno
+*.gcov
+coverage/
+lcov.info
+
+# --- Test/build directories inside tests ---
+/tests/**/cmake-build-*/
+/tests/**/CMakeFiles/
+/tests/**/CMakeCache.txt
+/tests/**/Testing/
+/tests/cmake-build-debug/
+/tests/cmake-build-release/
+Testing/
+
+# --- Binary blobs we never want in git ---
+*.exe
+*.dll
+*.lib
+*.a
+*.so
+*.dylib
+*.pdb
+*.o
+*.obj
+
+# --- Unreal Engine typical folders (safe to ignore if present) ---
+Binaries/
+DerivedDataCache/
+Intermediate/
+Saved/
+/unreal_engine/Source/ReactorMQ/Native/
+
+# --- Misc ---
+*.patch
+*.rej
+/[Tt]emp/
+
+# --- Build ---
+/_deps/
+/_build/
+/dist/
