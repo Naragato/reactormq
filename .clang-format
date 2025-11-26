@@ -1,0 +1,95 @@
+﻿# .clang-format
+
+BasedOnStyle: Microsoft
+Language: Cpp
+Standard: c++20
+UseTab: Never
+
+# Indentation and layout
+IndentWidth: 4
+ContinuationIndentWidth: 4
+ConstructorInitializerIndentWidth: 4
+ColumnLimit: 140
+AccessModifierOffset: -4
+NamespaceIndentation: All
+IndentCaseBlocks: true
+IndentCaseLabels: false
+KeepEmptyLinesAtTheStartOfBlocks: false
+MaxEmptyLinesToKeep: 1
+TabWidth: 0
+
+# Alignment
+AlignAfterOpenBracket: AlwaysBreak
+AlignConsecutiveAssignments: false
+AlignConsecutiveDeclarations: false
+AlignEscapedNewlines: Right
+AlignOperands: false
+AlignTrailingComments: false
+IndentRequiresClause: true
+
+# Short forms
+BinPackArguments: false
+BinPackParameters: false
+AllowAllArgumentsOnNextLine: false
+AllowAllParametersOfDeclarationOnNextLine: true
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortLambdasOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+AllowShortBlocksOnASingleLine: Never
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortEnumsOnASingleLine: false
+
+# Breaking
+BreakTemplateDeclarations: Yes
+AlwaysBreakAfterReturnType: None
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterClass: true
+  AfterControlStatement: true
+  AfterEnum: true
+  AfterFunction: true
+  AfterNamespace: true
+  AfterStruct: true
+  BeforeElse: true
+  BeforeLambdaBody: true
+  SplitEmptyFunction: true
+BreakBeforeTernaryOperators: true
+BreakConstructorInitializers: BeforeComma
+BreakInheritanceList: BeforeComma
+BreakBeforeBinaryOperators: All
+PenaltyBreakOpenParenthesis: 0
+PenaltyBreakBeforeMemberAccess: 0
+PenaltyIndentedWhitespace: 1
+PenaltyBreakBeforeFirstCallParameter: 100
+RequiresClausePosition: OwnLine
+
+
+InsertBraces: true
+
+# Namespaces and includes
+FixNamespaceComments: true
+IncludeBlocks: Preserve
+SortIncludes: true
+SortUsingDeclarations: true
+
+# Spacing
+PointerAlignment: Left
+SpaceAfterLogicalNot: false
+SpaceAfterTemplateKeyword: false
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeCpp11BracedList: false
+SpaceBeforeCtorInitializerColon: true
+SpaceBeforeInheritanceColon: true
+SpaceBeforeParens: ControlStatements
+SpaceBeforeRangeBasedForLoopColon: true
+SpaceInEmptyParentheses: false
+SpacesInAngles: false
+SpacesInCStyleCastParentheses: false
+SpacesInParentheses: false
+
+# Misc
+Cpp11BracedListStyle: false
+IndentPPDirectives: None
+PenaltyReturnTypeOnItsOwnLine: 1000
+ReflowComments: Always

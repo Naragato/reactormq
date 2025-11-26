@@ -1,0 +1,181 @@
+#include "ReactorMQClientPool.h"
+
+#include "ReactorMQBuildConfig.h"
+#include "ReactorMQClient.h"
+
+#include "Containers/BackgroundableTicker.h"
+#include "Containers/Ticker.h"
+#include "HAL/RunnableThread.h"
+
+using namespace UE;
+
+TSharedPtr<FReactorMQClient> FReactorMQClientPool::Create(
+    const FReactorMQConnectionSettings& InConnectionSettings,
+    FDeleter&& InDeleter)
+{
+    return MakeShareable(new FReactorMQClient(InConnectionSettings), MoveTemp(InDeleter));
+}
+
+FReactorMQClientPool::FReactorMQClientPool()
+{
+    if constexpr (GReactorMQThreadMode == EReactorMQThreadMode::GameThread)
+    {
+        const FTickerDelegate TickDelegate = FTickerDelegate::CreateRaw(this, &FReactorMQClientPool::GameThreadTick);
+        TickHandle = FTSBackgroundableTicker::GetCoreTicker().AddTicker(TickDelegate, 0.0f);
+    }
+}
+
+FReactorMQClientPool::~FReactorMQClientPool()
+{
+    Kill();
+}
+
+TSharedPtr<IReactorMQClient, ESPMode::ThreadSafe> FReactorMQClientPool::GetOrCreateClient(
+    const FReactorMQConnectionSettings& InConnectionSettings)
+{
+    const uint32 Hash = InConnectionSettings.GetHashCode();
+
+    {
+        FScopeLock Lock(&ClientMapLock);
+        if (TWeakPtr<FReactorMQClient, ESPMode::ThreadSafe>* Existing = Clients.Find(Hash))
+        {
+            if (TSharedPtr<FReactorMQClient, ESPMode::ThreadSafe> ExistingClient = Existing->Pin())
+            {
+                return StaticCastSharedPtr<IReactorMQClient>(ExistingClient);
+            }
+        }
+    }
+
+    TWeakPtr<FReactorMQClientPool> WeakSelf = AsShared();
+
+    auto Deleter = [WeakSelf](FReactorMQClient* InClient)
+    {
+        TSharedPtr<FReactorMQClientPool> StrongSelf = WeakSelf.Pin();
+        if (!StrongSelf.IsValid())
+        {
+            delete InClient;
+            return;
+        }
+
+        const uint32 DeleterHash = InClient->GetConnectionSettings().GetHashCode();
+
+        {
+            FScopeLock DeleterLock(&StrongSelf->ClientMapLock);
+            StrongSelf->Clients.Remove(DeleterHash);
+        }
+
+        delete InClient;
+    };
+
+    TSharedPtr<FReactorMQClient> OutClient = Create(InConnectionSettings, MoveTemp(Deleter));
+
+    if (!OutClient.IsValid())
+    {
+        return nullptr;
+    }
+
+    if constexpr (GReactorMQThreadMode != EReactorMQThreadMode::GameThread)
+    {
+        bool bExpected = false;
+        if (Thread == nullptr && bIsRunning.compare_exchange_strong(bExpected, true, std::memory_order_acq_rel))
+        {
+            Thread = FRunnableThread::Create(
+                this,
+                TEXT("FReactorMQClientPool"),
+                0,
+                TPri_Normal,
+                FPlatformAffinity::GetPoolThreadMask());
+        }
+    }
+
+    {
+        FScopeLock Lock(&ClientMapLock);
+        Clients.Add(Hash, OutClient.ToSharedRef());
+    }
+
+    return StaticCastSharedPtr<IReactorMQClient>(OutClient);
+}
+
+void FReactorMQClientPool::Kill()
+{
+    bIsRunning.store(false, std::memory_order_release);
+
+    if (Thread != nullptr)
+    {
+        Thread->Kill(true);
+        delete Thread;
+        Thread = nullptr;
+    }
+
+    if (TickHandle.IsValid())
+    {
+        FTSBackgroundableTicker::GetCoreTicker().RemoveTicker(TickHandle);
+        TickHandle.Reset();
+    }
+
+    FScopeLock Lock(&ClientMapLock);
+    Clients.Empty();
+}
+
+uint32 FReactorMQClientPool::Run()
+{
+    constexpr float MaxTickRate = 1.0f / 60.0f;
+    constexpr float MinWaitTime = 0.001f;
+
+    while (bIsRunning.load(std::memory_order_acquire))
+    {
+        const double StartTime = FPlatformTime::Seconds();
+        Tick();
+        const double EndTime = FPlatformTime::Seconds();
+        const float SleepTime = MaxTickRate - static_cast<float>(EndTime - StartTime);
+        FPlatformProcess::SleepNoStats(FMath::Max(MinWaitTime, SleepTime));
+    }
+
+    return 0;
+}
+
+void FReactorMQClientPool::Exit()
+{
+    FRunnable::Exit();
+}
+
+bool FReactorMQClientPool::Init()
+{
+    return FRunnable::Init();
+}
+
+void FReactorMQClientPool::Stop()
+{
+    FScopeLock Lock(&ClientMapLock);
+    Clients.Empty();
+}
+
+FSingleThreadRunnable* FReactorMQClientPool::GetSingleThreadInterface()
+{
+    return this;
+}
+
+void FReactorMQClientPool::TickInternal()
+{
+    for (auto& Pair : Clients)
+    {
+        if (TSharedPtr<FReactorMQClient, ESPMode::ThreadSafe> Client = Pair.Value.Pin())
+        {
+            Client->Tick();
+        }
+    }
+}
+
+void FReactorMQClientPool::Tick()
+{
+    FScopeLock Lock(&ClientMapLock);
+    TickInternal();
+}
+
+bool FReactorMQClientPool::GameThreadTick(float DeltaTime)
+{
+    check(IsInGameThread());
+    FScopeLock Lock(&ClientMapLock);
+    TickInternal();
+    return true;
+}
