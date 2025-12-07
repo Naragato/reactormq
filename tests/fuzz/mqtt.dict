@@ -1,0 +1,44 @@
+# MQTT Control Packet Types (upper nibble)
+"\x10"  # CONNECT
+"\x20"  # CONNACK
+"\x30"  # PUBLISH
+"\x40"  # PUBACK
+"\x50"  # PUBREC
+"\x60"  # PUBREL
+"\x70"  # PUBCOMP
+"\x80"  # SUBSCRIBE
+"\x90"  # SUBACK
+"\xa0"  # UNSUBSCRIBE
+"\xb0"  # UNSUBACK
+"\xc0"  # PINGREQ
+"\xd0"  # PINGRESP
+"\xe0"  # DISCONNECT
+
+# MQTT Protocol Name
+"\x00\x04MQTT"
+"MQTT"
+
+# Protocol Levels
+"\x03"
+"\x04"
+"\x05"
+
+# QoS values
+"\x00"
+"\x01"
+"\x02"
+
+# Common topic prefixes
+"$SYS/"
+"/test/"
+"home/"
+"sensor/"
+
+# Variable byte integer boundaries
+"\x7f"
+"\x80\x01"
+"\xff\x7f"
+"\x80\x80\x01"
+"\xff\xff\x7f"
+"\x80\x80\x80\x01"
+"\xff\xff\xff\x7f"

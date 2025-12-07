@@ -52,6 +52,11 @@ namespace reactormq::mqtt::client
 
         [[nodiscard]] const char* getStateName() const override;
 
+        [[nodiscard]] StateId getStateId() const override
+        {
+            return StateId::Connecting;
+        }
+
     private:
         StateTransition handleConnAck(Context& context, const packets::IControlPacket& packet);
         static void assignClientId(Context& context, const packets::ConnAck<packets::ProtocolVersion::V5>& connAck);

@@ -72,3 +72,14 @@ if (INTEGRATION_TEST_SOURCES)
 endif ()
 
 setup_test_target(stress_tests "stress/test_concurrent_commands.cpp;${TEST_COMMON_SOURCES}")
+
+# Section: Fuzz tests
+if (REACTORMQ_BUILD_FUZZERS)
+    if (NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        message(WARNING "REACTORMQ_BUILD_FUZZERS is ON but CMAKE_CXX_COMPILER_ID='${CMAKE_CXX_COMPILER_ID}'. libFuzzer fuzzers require Clang/AppleClang; fuzzers will not be built.")
+    elseif (WIN32)
+        message(WARNING "REACTORMQ_BUILD_FUZZERS is ON but Windows/MSVC is not supported for libFuzzer in this project; fuzzers will not be built.")
+    else ()
+        add_subdirectory(fuzz)
+    endif ()
+endif ()

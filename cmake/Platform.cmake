@@ -12,6 +12,7 @@ function(reactormq_set_defaults)
     set(CMAKE_CXX_EXTENSIONS OFF PARENT_SCOPE)
     option(REACTORMQ_BUILD_SHARED "Build shared library" OFF)
     option(REACTORMQ_BUILD_TESTS "Build tests" ON)
+    option(REACTORMQ_BUILD_FUZZERS "Build libFuzzer-based fuzz tests" OFF)
     option(REACTORMQ_WITH_THREADS "Enable threading support" ON)
     option(REACTORMQ_WITH_EXCEPTIONS "Enable C++ exceptions" OFF)
     option(REACTORMQ_WITH_RTTI "Enable RTTI (typeid/dynamic_cast)" OFF)
@@ -28,6 +29,7 @@ function(reactormq_set_defaults)
     option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
     option(ENABLE_MSAN "Enable MemorySanitizer" OFF)
     option(ENABLE_TSAN "Enable ThreadSanitizer" OFF)
+    option(ENABLE_UBSAN "Enable UndefinedBehaviorSanitizer" OFF)
 
     set_property(GLOBAL PROPERTY REACTORMQ_SOCKET_WITH_POSIX_SOCKET 1)
     set_property(GLOBAL PROPERTY REACTORMQ_SOCKET_WITH_WINSOCKET 0)
@@ -158,6 +160,13 @@ function(reactormq_target_warnings target)
                 -Wextra
                 -Wpedantic
         )
+        if (APPLE AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+            target_compile_options(${target} PRIVATE
+                    -Wno-elaborated-enum-base
+                    -Wno-nullability-extension
+                    -Wno-language-extension-token
+            )
+        endif ()
     endif ()
 endfunction()
 
@@ -246,6 +255,45 @@ function(reactormq_add_sanitizers target)
     if (ENABLE_ASAN OR ENABLE_MSAN OR ENABLE_TSAN)
         target_compile_definitions(${target} PRIVATE REACTORMQ_WITH_SANITIZERS=1)
     endif ()
+endfunction()
+
+function(reactormq_add_fuzzer_sanitizers target)
+    if (NOT TARGET ${target})
+        message(FATAL_ERROR "reactormq_add_fuzzer_sanitizers: target '${target}' does not exist")
+    endif ()
+
+    if (NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        message(FATAL_ERROR "libFuzzer requires Clang or AppleClang compiler")
+    endif ()
+
+    if (ENABLE_MSAN OR ENABLE_TSAN)
+        message(FATAL_ERROR "MemorySanitizer/ThreadSanitizer cannot be combined with -fsanitize=fuzzer. Disable ENABLE_MSAN/ENABLE_TSAN for fuzz targets.")
+    endif ()
+
+    target_compile_options(${target} PRIVATE
+            -fsanitize=fuzzer
+            -g
+            -O1
+    )
+    target_link_options(${target} PRIVATE -fsanitize=fuzzer)
+    if (APPLE)
+        target_compile_options(${target} PRIVATE -stdlib=libc++)
+        target_link_options(${target} PRIVATE
+                -stdlib=libc++
+                -L/opt/homebrew/opt/llvm/lib/c++
+                -Wl,-rpath,/opt/homebrew/opt/llvm/lib/c++
+        )
+    endif ()
+    if (ENABLE_ASAN)
+        target_compile_options(${target} PRIVATE -fsanitize=address)
+        target_link_options(${target} PRIVATE -fsanitize=address)
+    endif ()
+    if (ENABLE_UBSAN)
+        target_compile_options(${target} PRIVATE -fsanitize=undefined)
+        target_link_options(${target} PRIVATE -fsanitize=undefined)
+    endif ()
+
+    target_compile_definitions(${target} PRIVATE REACTORMQ_WITH_FUZZING=1)
 endfunction()
 
 function(reactormq_disable_msan_for_targets)

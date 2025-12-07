@@ -64,6 +64,7 @@ TEST(Logging, MacroHexAppendsDump)
     EXPECT_NE(sink->messages[0].text.find("01 02 03 "), std::string::npos);
 }
 
+#if REACTORMQ_WITH_FILE_SINK
 TEST(Logging, FileSinkWrites)
 {
     {
@@ -87,3 +88,4 @@ TEST(Logging, FileSinkWrites)
     EXPECT_GT(sz, 0u);
     std::remove("reactormq_test.log");
 }
+#endif // REACTORMQ_WITH_FILE_SINK

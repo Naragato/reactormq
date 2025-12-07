@@ -49,6 +49,11 @@ namespace reactormq::mqtt::client
             return "Ready";
         }
 
+        [[nodiscard]] StateId getStateId() const override
+        {
+            return StateId::Ready;
+        }
+
     private:
         /**
          * @brief Handle a publish command by encoding and sending a PUBLISH packet.

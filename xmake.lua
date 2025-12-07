@@ -105,40 +105,11 @@ add_requires("libressl", {configs = {shared = false}})
 set_languages("cxx20")
 target("reactormq")
     on_load(function (target)
-        import("core.cache.memcache")
-        local defaults = import("xmake.modules.defaults")
-        defaults()
-        local cfg = memcache.get("defaults", "config")
-        if not cfg then
-            raise("reactormq: defaults config not found in memcache")
-        end
-
-        local platform_module_name = string.lower(cfg.platform)
-        local platform = import("xmake.modules.platform." .. platform_module_name, { anonymous = true })
-        platform.configure(cfg, target)
-
-        local resolve_tristate = import("xmake.modules.option_resolver", { anonymous = true })
-
-        for k, v in pairs(cfg) do
-            target:add("options", k)
-            cfg[k] = resolve_tristate(get_config(k), function()
-                return cfg[k]
-            end)
-        end
-
-        local flags = import("xmake.modules.flags", { anonymous = true })
-        flags.apply_warnings()(target)
-        flags.apply_features(cfg)(target)
-        flags.apply_sanitizers(cfg)(target)
-
-        local ssl = import("xmake.modules.ssl", { anonymous = true })
-        ssl.configure(cfg, target)
-
-        if flags.apply_defines then
-            flags.apply_defines(cfg)(target)
-        end
-
+        local helpers = import("xmake.modules.helpers", { anonymous = true })
+        helpers.configure(target)
         local sources = import("xmake.modules.sources", { anonymous = true })
+        import("core.cache.memcache")
+        local cfg = memcache.get("defaults", "config")
         local extra_socket_sources = sources.collect_socket_sources(cfg, "$(projectdir)/src")
 
         for k, v in pairs(extra_socket_sources) do
@@ -151,10 +122,8 @@ target("reactormq")
 
         if get_config("build_shared") then
             target:set("kind", "shared")
-            target:add("defines", "REACTORMQ_BUILD")
         else
             target:set("kind", "static")
-            target:add("defines", "REACTORMQ_STATIC")
         end
 
         target:set("languages", "cxx20")
@@ -170,3 +139,188 @@ target("reactormq")
 
     add_rules("mode.debug", "mode.release", "mode.releasedbg", "mode.minsizerel")
 target_end()
+
+local build_tests = get_config("build_tests")
+if build_tests ~= "off" then
+    add_requires("llvm")
+    add_requires("gtest")
+    target("reactormq_tests")
+        set_kind("binary")
+        set_group("tests")
+        set_default(false)
+        add_deps("reactormq")
+        add_packages("gtest")
+        add_files("$(projectdir)/tests/**.cpp")
+        add_includedirs("$(projectdir)/tests", "$(projectdir)/src", "$(projectdir)/include")
+        add_rules("mode.debug", "mode.release", "mode.releasedbg", "mode.minsizerel")
+        on_load(function (target)
+            local helpers = import("xmake.modules.helpers", { anonymous = true })
+            helpers.configure(target)
+            target:add("defines", "REACTORMQ_WITH_TESTS=1")
+        end)
+    target_end()
+
+    target("unit_tests")
+        set_kind("binary")
+        set_group("tests")
+        set_default(false)
+        add_deps("reactormq")
+        add_packages("gtest")
+        add_files("$(projectdir)/tests/unit/**.cpp", "$(projectdir)/tests/fixtures/**.cpp", "$(projectdir)/tests/test_main.cpp")
+        add_includedirs("$(projectdir)/tests", "$(projectdir)/src", "$(projectdir)/include")
+        add_tests("unit")
+        add_rules("mode.debug", "mode.release", "mode.releasedbg", "mode.minsizerel")
+        on_load(function (target)
+            local helpers = import("xmake.modules.helpers", { anonymous = true })
+            helpers.configure(target)
+            target:add("defines", "REACTORMQ_WITH_TESTS=1")
+        end)
+    target_end()
+
+    target("integration_tests")
+        set_kind("binary")
+        set_group("tests")
+        set_default(false)
+        add_deps("reactormq")
+        add_packages("gtest")
+        add_files("$(projectdir)/tests/integration/**.cpp", "$(projectdir)/tests/fixtures/**.cpp", "$(projectdir)/tests/test_main.cpp")
+        add_includedirs("$(projectdir)/tests", "$(projectdir)/src", "$(projectdir)/include")
+        add_rules("mode.debug", "mode.release", "mode.releasedbg", "mode.minsizerel")
+        on_load(function (target)
+            local helpers = import("xmake.modules.helpers", { anonymous = true })
+            helpers.configure(target)
+            target:add("defines", "REACTORMQ_WITH_TESTS=1")
+        end)
+    target_end()
+
+    target("stress_tests")
+        set_kind("binary")
+        set_group("tests")
+        set_default(false)
+        add_deps("reactormq")
+        add_packages("gtest")
+        add_files("$(projectdir)/tests/stress/test_concurrent_commands.cpp", "$(projectdir)/tests/fixtures/**.cpp", "$(projectdir)/tests/test_main.cpp")
+        add_includedirs("$(projectdir)/tests", "$(projectdir)/src", "$(projectdir)/include")
+        add_rules("mode.debug", "mode.release", "mode.releasedbg", "mode.minsizerel")
+        on_load(function (target)
+            local helpers = import("xmake.modules.helpers", { anonymous = true })
+            helpers.configure(target)
+            target:add("defines", "REACTORMQ_WITH_TESTS=1")
+        end)
+    target_end()
+
+    target("fuzz_mqtt_codec")
+        set_toolchains("@llvm")
+        set_kind("binary")
+        set_group("tests")
+        set_default(false)
+        add_deps("reactormq")
+        add_files("$(projectdir)/tests/fuzz/fuzz_mqtt_codec.cpp")
+        add_includedirs("$(projectdir)/tests", "$(projectdir)/src", "$(projectdir)/include")
+        on_load(function (target)
+            if is_plat("windows") then
+                return
+            end
+            if is_plat("macosx") then
+                target:add("cxflags", "-stdlib=libc++", {force = true})
+                target:add("ldflags", "-stdlib=libc++", {force = true})
+                target:add("ldflags", "-L/opt/homebrew/opt/llvm/lib/c++", {force = true})
+            end
+            target:add("cxflags", "-fsanitize=fuzzer-no-link", {force = true})
+            target:add("ldflags", "-fsanitize=fuzzer,address", {force = true})
+            target:add("defines", "REACTORMQ_WITH_FUZZING=1")
+            target:add("defines", "REACTORMQ_WITH_TESTS=1")
+            local helpers = import("xmake.modules.helpers", { anonymous = true })
+            helpers.configure(target)
+        end)
+        add_rules("mode.debug", "mode.release", "mode.releasedbg", "mode.minsizerel")
+    target_end()
+
+    target("fuzz_fixed_header")
+        set_toolchains("@llvm")
+        set_kind("binary")
+        set_group("tests")
+        set_default(false)
+        add_deps("reactormq")
+        add_files("$(projectdir)/tests/fuzz/fuzz_fixed_header.cpp")
+        add_includedirs("$(projectdir)/tests", "$(projectdir)/src", "$(projectdir)/include")
+        on_load(function (target)
+            if is_plat("windows") then
+                return
+            end
+            target:add("cxflags", "-fsanitize=fuzzer")
+            target:add("ldflags", "-fsanitize=fuzzer")
+            target:add("defines", "REACTORMQ_WITH_FUZZING=1")
+            target:add("defines", "REACTORMQ_WITH_TESTS=1")
+            local helpers = import("xmake.modules.helpers", { anonymous = true })
+            helpers.configure(target)
+        end)
+        add_rules("mode.debug", "mode.release", "mode.releasedbg", "mode.minsizerel")
+    target_end()
+
+    target("fuzz_variable_byte_integer")
+        set_toolchains("@llvm")
+        set_kind("binary")
+        set_group("tests")
+        set_default(false)
+        add_deps("reactormq")
+        add_files("$(projectdir)/tests/fuzz/fuzz_variable_byte_integer.cpp")
+        add_includedirs("$(projectdir)/tests", "$(projectdir)/src", "$(projectdir)/include")
+        on_load(function (target)
+            if is_plat("windows") then
+                return
+            end
+            target:add("cxflags", "-fsanitize=fuzzer")
+            target:add("ldflags", "-fsanitize=fuzzer")
+            target:add("defines", "REACTORMQ_WITH_FUZZING=1")
+            target:add("defines", "REACTORMQ_WITH_TESTS=1")
+            local helpers = import("xmake.modules.helpers", { anonymous = true })
+            helpers.configure(target)
+        end)
+        add_rules("mode.debug", "mode.release", "mode.releasedbg", "mode.minsizerel")
+    target_end()
+
+    target("fuzz_publish_packet")
+        set_toolchains("@llvm")
+        set_kind("binary")
+        set_group("tests")
+        set_default(false)
+        add_deps("reactormq")
+        add_files("$(projectdir)/tests/fuzz/fuzz_publish_packet.cpp")
+        add_includedirs("$(projectdir)/tests", "$(projectdir)/src", "$(projectdir)/include")
+        on_load(function (target)
+            if is_plat("windows") then
+                return
+            end
+            target:add("cxflags", "-fsanitize=fuzzer")
+            target:add("ldflags", "-fsanitize=fuzzer")
+            target:add("defines", "REACTORMQ_WITH_FUZZING=1")
+            target:add("defines", "REACTORMQ_WITH_TESTS=1")
+            local helpers = import("xmake.modules.helpers", { anonymous = true })
+            helpers.configure(target)
+        end)
+        add_rules("mode.debug", "mode.release", "mode.releasedbg", "mode.minsizerel")
+    target_end()
+
+    target("fuzz_connect_packet")
+        set_toolchains("@llvm")
+        set_kind("binary")
+        set_group("tests")
+        set_default(false)
+        add_deps("reactormq")
+        add_files("$(projectdir)/tests/fuzz/fuzz_connect_packet.cpp")
+        add_includedirs("$(projectdir)/tests", "$(projectdir)/src", "$(projectdir)/include")
+        on_load(function (target)
+            if is_plat("windows") then
+                return
+            end
+            target:add("cxflags", "-fsanitize=fuzzer")
+            target:add("ldflags", "-fsanitize=fuzzer")
+            target:add("defines", "REACTORMQ_WITH_FUZZING=1")
+            target:add("defines", "REACTORMQ_WITH_TESTS=1")
+            local helpers = import("xmake.modules.helpers", { anonymous = true })
+            helpers.configure(target)
+        end)
+        add_rules("mode.debug", "mode.release", "mode.releasedbg", "mode.minsizerel")
+    target_end()
+end

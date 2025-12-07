@@ -2,7 +2,6 @@ function configure(cfg, target)
 
     local provider = cfg.ssl_provider
     cfg.ssl_available = false
-    print("ssl provider:", provider)
     if provider == "libressl" then
         if target then
             target:add("packages", "libressl")

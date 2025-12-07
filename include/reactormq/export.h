@@ -9,15 +9,15 @@
 #ifdef REACTORMQ_UNREAL_API
 #define REACTORMQ_API REACTORMQ_UNREAL_API
 
-#elif defined(REACTORMQ_STATIC)
+#elif defined(REACTORMQ_BUILD_STATIC)
 #define REACTORMQ_API
 
 #elif defined(_WIN32) || defined(_WIN64)
-#ifdef REACTORMQ_BUILD
+#ifdef REACTORMQ_BUILD_SHARED
 #define REACTORMQ_API __declspec(dllexport)
 #else
 #define REACTORMQ_API __declspec(dllimport)
-#endif // REACTORMQ_BUILD
+#endif // REACTORMQ_BUILD_SHARED
 
 #else
 #if defined(__GNUC__) && (__GNUC__ >= 4)

@@ -2,13 +2,12 @@
 //  Copyright 2025 Simon Balarabe
 //  Project: ReactorMQ — https://github.com/Naragato/reactormq
 
-#include <gtest/gtest.h>
-
-#include "mqtt/client/client_factory.h"
+#include "reactormq/mqtt/client_factory.h"
 #include "reactormq/mqtt/connection_settings_builder.h"
 #include "reactormq/mqtt/message.h"
 
 #include <future>
+#include <gtest/gtest.h>
 
 using namespace reactormq::mqtt;
 using namespace reactormq::mqtt::client;

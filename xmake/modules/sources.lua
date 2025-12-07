@@ -24,7 +24,7 @@ function collect_socket_sources(cfg, sources_dir)
     if cfg.ssl_available then
         if cfg.family_darwin then
             table.insert(files, path.join(sources_dir, "socket/platform/darwin_trust_anchor_set.cpp"))
-        elseif cfg.family.windows then
+        elseif cfg.family_windows then
             table.insert(files, path.join(sources_dir, "socket/platform/win_trust_anchor_set.cpp"))
         else
             table.insert(files, path.join(sources_dir, "socket/platform/posix_trust_anchor_set.cpp"))

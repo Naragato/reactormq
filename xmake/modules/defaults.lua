@@ -6,8 +6,6 @@ local memcache = import("core.cache.memcache")
 local config = import("core.project.config")
 
 function main()
-    print("[reactormq:xmake] defaults.lua: building base cfg")
-
     ---------------------------------------------------------------------
     -- Detect platform/family
     ---------------------------------------------------------------------

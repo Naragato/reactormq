@@ -74,6 +74,11 @@ function apply_sanitizers(cfg)
 end
 function apply_defines(cfg)
     return function(target)
+        if get_config("build_shared") then
+            target:add("defines", "REACTORMQ_BUILD_SHARED")
+        else
+            target:add("defines", "REACTORMQ_BUILD_STATIC")
+        end
         local function add_bool_define(field, macro)
             local value = cfg[field] and 1 or 0
             target:add("defines", string.format("%s=%d", macro, value))

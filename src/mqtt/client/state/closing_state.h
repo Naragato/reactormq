@@ -47,6 +47,11 @@ namespace reactormq::mqtt::client
             return "Closing";
         }
 
+        [[nodiscard]] StateId getStateId() const override
+        {
+            return StateId::Closing;
+        }
+
     private:
         std::optional<std::promise<Result<void>>> m_promise;
         std::chrono::steady_clock::time_point m_entryTime;

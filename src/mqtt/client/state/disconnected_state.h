@@ -47,6 +47,11 @@ namespace reactormq::mqtt::client
             return "Disconnected";
         }
 
+        [[nodiscard]] StateId getStateId() const override
+        {
+            return StateId::Disconnected;
+        }
+
     private:
         bool m_wasGracefulDisconnect = false;
         std::optional<std::chrono::steady_clock::time_point> m_nextRetryTime;

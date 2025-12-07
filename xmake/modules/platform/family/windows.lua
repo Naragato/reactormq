@@ -6,5 +6,6 @@ function configure(cfg, target)
 
     if target then
         target:add("defines", "WIN32_LEAN_AND_MEAN", "NOMINMAX", "UNICODE", "_UNICODE")
+        target:add("syslinks", "ws2_32")
     end
 end

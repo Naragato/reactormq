@@ -53,6 +53,7 @@ namespace
         {
             return "Dummy";
         }
+        [[nodiscard]] StateId getStateId() const override { return StateId::Ready; }
     };
 } // namespace
 

@@ -1,26 +1,34 @@
-local logging = import("logging", { anonymous = true })
+function configure(target)
+    import("core.cache.memcache")
+    local defaults = import("defaults")
+    defaults()
+    local cfg = memcache.get("defaults", "config")
+    if not cfg then
+        raise("reactormq: defaults config not found in memcache")
+    end
 
-function is_windows_family(cfg)
-    return cfg.family == "WindowsFamily"
-end
+    local platform_module_name = string.lower(cfg.platform)
+    local platform = import("platform." .. platform_module_name, { anonymous = true })
+    platform.configure(cfg, target)
 
-function is_posix_family(cfg)
-    return cfg.family == "PosixFamily" or cfg.family == "DarwinFamily"
-end
+    local resolve_tristate = import("option_resolver", { anonymous = true })
 
-function is_playstation_family(cfg)
-    return cfg.family == "PlaystationFamily"
-end
+    for k, v in pairs(cfg) do
+        target:add("options", k)
+        cfg[k] = resolve_tristate(get_config(k), function()
+            return cfg[k]
+        end)
+    end
 
-function is_nintendo_family(cfg)
-    return cfg.family == "NintendoFamily"
-end
+    local flags = import("flags", { anonymous = true })
+    flags.apply_warnings()(target)
+    flags.apply_features(cfg)(target)
+    flags.apply_sanitizers(cfg)(target)
 
-function is_console(cfg)
-    return cfg.is_console
-end
+    local ssl = import("ssl", { anonymous = true })
+    ssl.configure(cfg, target)
 
-function load_msvc(target)
-    import("core.tool.toolchain")
-    return toolchain.load("msvc", { plat = target:plat(), arch = target:arch() })
+    if flags.apply_defines then
+        flags.apply_defines(cfg)(target)
+    end
 end

@@ -189,7 +189,7 @@ namespace reactormq::mqtt
 
             SlotBase slot;
             slot.id = m_nextId++;
-            slot.token = std::make_shared<int>(0);
+            slot.token = std::make_shared<std::atomic<bool>>(true);
             std::weak_ptr<void> wtoken = slot.token;
             slot.keeper = sp;
             slot.expired = [wsp]
@@ -246,7 +246,7 @@ namespace reactormq::mqtt
 
             SlotBase slot;
             slot.id = m_nextId++;
-            slot.token = std::make_shared<int>(0);
+            slot.token = std::make_shared<std::atomic<bool>>(true);
             std::weak_ptr<void> wtoken = slot.token;
             slot.expired = [wcb]
             {
@@ -321,7 +321,7 @@ namespace reactormq::mqtt
 
             SlotBase slot;
             slot.id = m_nextId++;
-            slot.token = std::make_shared<int>(0);
+            slot.token = std::make_shared<std::atomic<bool>>(true);
             std::weak_ptr<void> wtoken = slot.token;
             slot.keeper = lambdaPtr;
 
@@ -414,7 +414,7 @@ namespace reactormq::mqtt
 
             SlotBase slot;
             slot.id = m_nextId++;
-            slot.token = std::make_shared<int>(0);
+            slot.token = std::make_shared<std::atomic<bool>>(true);
             std::weak_ptr<void> wtoken = slot.token;
             slot.expired = [wobj]
             {
@@ -493,7 +493,11 @@ namespace reactormq::mqtt
             {
                 if (it->id == id)
                 {
-                    it->token.reset();
+                    if (it->token)
+                    {
+                        *std::static_pointer_cast<std::atomic<bool>>(it->token) = false;
+                        it->token.reset();
+                    }
                     m_slots.erase(it);
                     break;
                 }
@@ -508,7 +512,11 @@ namespace reactormq::mqtt
             std::scoped_lock lock(m_mutex);
             for (auto& s : m_slots)
             {
-                s.token.reset();
+                if (s.token)
+                {
+                    *std::static_pointer_cast<std::atomic<bool>>(s.token) = false;
+                    s.token.reset();
+                }
             }
             m_slots.clear();
         }
@@ -545,8 +553,11 @@ namespace reactormq::mqtt
             {
                 for (auto& s : snapshot)
                 {
-                    auto res = s.call(args...);
-                    (void)res;
+                    if (s.token && *std::static_pointer_cast<std::atomic<bool>>(s.token))
+                    {
+                        auto res = s.call(args...);
+                        (void)res;
+                    }
                 }
                 return;
             }
@@ -556,9 +567,12 @@ namespace reactormq::mqtt
                 out.reserve(snapshot.size());
                 for (auto& s : snapshot)
                 {
-                    if (auto res = s.call(args...))
+                    if (s.token && *std::static_pointer_cast<std::atomic<bool>>(s.token))
                     {
-                        out.push_back(std::move(*res));
+                        if (auto res = s.call(args...))
+                        {
+                            out.push_back(std::move(*res));
+                        }
                     }
                 }
                 return out;

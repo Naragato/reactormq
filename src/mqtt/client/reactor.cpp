@@ -95,7 +95,7 @@ namespace reactormq::mqtt::client
             return false;
         }
 
-        const bool connected = (std::strcmp(m_currentState->getStateName(), "Ready") == 0);
+        const bool connected = (m_currentState->getStateId() == StateId::Ready);
         REACTORMQ_LOG(
             logging::LogLevel::Trace,
             "Reactor::isConnected() -> %s (state=%s)",
@@ -180,7 +180,7 @@ namespace reactormq::mqtt::client
 
         REACTORMQ_LOG(logging::LogLevel::Debug, "Reactor::setupSocketCallbacks() installing callbacks");
 
-        sock->getOnConnectCallback().add(
+        sock->getOnConnectCallback().add(this,
             [this](const bool wasSuccessful)
             {
                 REACTORMQ_LOG(
@@ -203,7 +203,7 @@ namespace reactormq::mqtt::client
                 }
             });
 
-        sock->getOnDisconnectCallback().add(
+        sock->getOnDisconnectCallback().add(this,
             [this]
             {
                 REACTORMQ_LOG(
@@ -230,7 +230,7 @@ namespace reactormq::mqtt::client
                     });
             });
 
-        sock->getOnDataReceivedCallback().add(
+        sock->getOnDataReceivedCallback().add(this,
             [this](const uint8_t* data, const uint32_t size)
             {
                 REACTORMQ_LOG(

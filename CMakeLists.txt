@@ -107,14 +107,14 @@ else ()
                 ${REACTORMQ_PRIVATE_HEADERS}
                 ${REACTORMQ_PUBLIC_HEADERS}
         )
-        target_compile_definitions(reactormq PRIVATE REACTORMQ_BUILD=1)
+        target_compile_definitions(reactormq PRIVATE REACTORMQ_BUILD_SHARED=1)
     else ()
         add_library(reactormq STATIC
                 ${REACTORMQ_SOURCES}
                 ${REACTORMQ_PRIVATE_HEADERS}
                 ${REACTORMQ_PUBLIC_HEADERS}
         )
-        target_compile_definitions(reactormq PUBLIC REACTORMQ_STATIC=1)
+        target_compile_definitions(reactormq PUBLIC REACTORMQ_BUILD_STATIC=1)
     endif ()
 
     set_target_properties(reactormq PROPERTIES
@@ -173,6 +173,6 @@ target_compile_definitions(reactormq PRIVATE
     REACTORMQ_WITH_UNAME=$<BOOL:${REACTORMQ_WITH_UNAME}>
 )
 
-# Section: Tests
+# Section: Tests & Fuzzing
 
 reactormq_configure_tests_for_platform()

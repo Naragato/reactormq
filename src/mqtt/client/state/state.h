@@ -16,6 +16,14 @@ namespace reactormq::mqtt::client
 
     using StatePtr = std::unique_ptr<IState>;
 
+    enum class StateId
+    {
+        Disconnected,
+        Connecting,
+        Ready,
+        Closing
+    };
+
     /**
      * @brief Interface for connection lifecycle states.
      *
@@ -83,5 +91,11 @@ namespace reactormq::mqtt::client
          * @return State name.
          */
         [[nodiscard]] virtual const char* getStateName() const = 0;
+
+        /**
+         * @brief Get the unique identifier for this state.
+         * @return StateId enum value.
+         */
+        [[nodiscard]] virtual StateId getStateId() const = 0;
     };
 } // namespace reactormq::mqtt::client

@@ -4,8 +4,8 @@
 
 #include <gtest/gtest.h>
 
-#include "mqtt/client/client_factory.h"
 #include "mqtt/client/client_impl.h"
+#include "reactormq/mqtt/client_factory.h"
 #include "reactormq/mqtt/connection_settings_builder.h"
 
 using namespace reactormq::mqtt;

@@ -91,21 +91,21 @@ namespace
 
 TEST(ReactorTest, InitialStateIsDisconnected)
 {
-    const Reactor r(makeSettings());
-    EXPECT_STREQ(r.getCurrentStateName(), "Disconnected");
-    EXPECT_FALSE(r.isConnected());
+    const auto r = std::make_shared<Reactor>(makeSettings());
+    EXPECT_STREQ(r->getCurrentStateName(), "Disconnected");
+    EXPECT_FALSE(r->isConnected());
 }
 
 TEST(ReactorTest, EnqueueCommandAddsToQueueAndTickProcesses)
 {
-    Reactor r(makeSettings());
+    auto r = std::make_shared<Reactor>(makeSettings());
 
     std::promise<Result<void>> p;
     auto f = p.get_future();
     DisconnectCommand cmd{ std::move(p) };
 
-    r.enqueueCommand(std::move(cmd));
-    r.tick();
+    r->enqueueCommand(std::move(cmd));
+    r->tick();
 
     EXPECT_EQ(f.wait_for(std::chrono::milliseconds(0)), std::future_status::ready);
     const auto res = f.get();
@@ -114,42 +114,42 @@ TEST(ReactorTest, EnqueueCommandAddsToQueueAndTickProcesses)
 
 TEST(ReactorTest, GetContextReturnsSameContextInstance)
 {
-    Reactor r(makeSettings());
-    auto& a = r.getContext();
-    auto& b = r.getContext();
+    auto r = std::make_shared<Reactor>(makeSettings());
+    auto& a = r->getContext();
+    auto& b = r->getContext();
     EXPECT_EQ(&a, &b);
 }
 
 TEST(ReactorTest, TransitionToConnectingStateOnConnectCommand)
 {
-    Reactor r(makeSettings());
+    auto r = std::make_shared<Reactor>(makeSettings());
 
     const auto fake = std::make_shared<FakeSocket>(makeSettings());
-    r.getContext().setSocket(fake);
+    r->getContext().setSocket(fake);
 
     std::promise<Result<void>> p;
     ConnectCommand cmd{ true, std::move(p) };
-    r.enqueueCommand(std::move(cmd));
+    r->enqueueCommand(std::move(cmd));
 
-    r.tick();
-    EXPECT_STREQ(r.getCurrentStateName(), "Connecting");
+    r->tick();
+    EXPECT_STREQ(r->getCurrentStateName(), "Connecting");
 }
 
 TEST(ReactorTest, IsConnectedTrueOnlyInReadyState)
 {
-    Reactor r(makeSettings());
+    auto r = std::make_shared<Reactor>(makeSettings());
 
     const auto fake = std::make_shared<FakeSocket>(makeSettings());
-    r.getContext().setSocket(fake);
+    r->getContext().setSocket(fake);
 
-    r.tick();
+    r->tick();
 
     std::promise<Result<void>> p;
     ConnectCommand cmd{ true, std::move(p) };
-    r.enqueueCommand(std::move(cmd));
-    r.tick();
-    EXPECT_FALSE(r.isConnected());
-    EXPECT_STREQ(r.getCurrentStateName(), "Connecting");
+    r->enqueueCommand(std::move(cmd));
+    r->tick();
+    EXPECT_FALSE(r->isConnected());
+    EXPECT_STREQ(r->getCurrentStateName(), "Connecting");
 
     fake->getOnConnectCallback().broadcast(true);
 
@@ -161,6 +161,6 @@ TEST(ReactorTest, IsConnectedTrueOnlyInReadyState)
 
     fake->getOnDataReceivedCallback().broadcast(reinterpret_cast<const uint8_t*>(buf.data()), static_cast<uint32_t>(buf.size()));
 
-    EXPECT_TRUE(r.isConnected());
-    EXPECT_STREQ(r.getCurrentStateName(), "Ready");
+    EXPECT_TRUE(r->isConnected());
+    EXPECT_STREQ(r->getCurrentStateName(), "Ready");
 }
