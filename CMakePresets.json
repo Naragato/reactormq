@@ -5,7 +5,6 @@
     "minor": 0,
     "patch": 0
   },
-  "$comment": "Presets covering host (macOS/Linux/Windows) and console toolchains with test/fuzz/sanitizer options.",
   "include": [],
   "configurePresets": [
     {
