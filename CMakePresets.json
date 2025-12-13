@@ -1,0 +1,632 @@
+{
+  "version": 9,
+  "cmakeMinimumRequired": {
+    "major": 4,
+    "minor": 0,
+    "patch": 0
+  },
+  "$comment": "Presets covering host (macOS/Linux/Windows) and console toolchains with test/fuzz/sanitizer options.",
+  "include": [],
+  "configurePresets": [
+    {
+      "name": "base-common",
+      "hidden": true,
+      "binaryDir": "${sourceDir}/cmake-build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "REACTORMQ_BUILD_TESTS": "ON",
+        "REACTORMQ_BUILD_FUZZERS": "OFF",
+        "ENABLE_ASAN": "OFF",
+        "ENABLE_MSAN": "OFF",
+        "ENABLE_TSAN": "OFF",
+        "ENABLE_UBSAN": "OFF"
+      }
+    },
+    {
+      "name": "base-ninja-multi",
+      "displayName": "Base Ninja Multi",
+      "description": "Baseline multi-config using Ninja Multi-Config",
+      "generator": "Ninja Multi-Config",
+      "inherits": "base-common"
+    },
+    {
+      "name": "base-ninja",
+      "displayName": "Base Ninja (single-config)",
+      "description": "Baseline single-config using Ninja",
+      "generator": "Ninja",
+      "inherits": "base-common"
+    },
+    {
+      "name": "overlay-asan",
+      "hidden": true,
+      "cacheVariables": {
+        "ENABLE_ASAN": "ON"
+      }
+    },
+    {
+      "name": "overlay-tsan",
+      "hidden": true,
+      "cacheVariables": {
+        "ENABLE_TSAN": "ON"
+      }
+    },
+    {
+      "name": "overlay-fuzz-clang",
+      "hidden": true,
+      "cacheVariables": {
+        "REACTORMQ_BUILD_FUZZERS": "ON",
+        "ENABLE_ASAN": "ON",
+
+        "ENABLE_UBSAN": "ON"
+      }
+    },
+    {
+      "name": "mac-appleclang-ninja-multi",
+      "displayName": "macOS AppleClang Ninja Multi",
+      "inherits": "base-ninja-multi",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Darwin"
+      },
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "/usr/bin/clang",
+        "CMAKE_CXX_COMPILER": "/usr/bin/clang++"
+      }
+    },
+    {
+      "name": "mac-appleclang-asan",
+      "displayName": "macOS AppleClang Ninja Multi + ASAN",
+      "inherits": [
+        "overlay-asan",
+        "mac-appleclang-ninja-multi"
+      ]
+    },
+    {
+      "name": "mac-appleclang-tsan",
+      "displayName": "macOS AppleClang Ninja Multi + TSAN",
+      "inherits": [
+        "overlay-tsan",
+        "mac-appleclang-ninja-multi"
+      ]
+    },
+    {
+      "name": "mac-appleclang-fuzz",
+      "displayName": "macOS AppleClang Fuzzing",
+      "inherits": [
+        "overlay-fuzz-clang",
+        "mac-appleclang-ninja-multi"
+      ]
+    },
+    {
+      "name": "mac-llvm-ninja-multi",
+      "displayName": "macOS Homebrew LLVM Ninja Multi",
+      "inherits": "base-ninja-multi",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Darwin"
+      },
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "/opt/homebrew/opt/llvm/bin/clang",
+        "CMAKE_CXX_COMPILER": "/opt/homebrew/opt/llvm/bin/clang++"
+      },
+      "environment": {
+        "PATH": "/opt/homebrew/opt/llvm/bin:$penv{PATH}"
+      }
+    },
+    {
+      "name": "mac-llvm-asan",
+      "displayName": "macOS Homebrew LLVM Ninja Multi + ASAN",
+      "inherits": [
+        "overlay-asan",
+        "mac-llvm-ninja-multi"
+      ]
+    },
+    {
+      "name": "mac-llvm-tsan",
+      "displayName": "macOS Homebrew LLVM Ninja Multi + TSAN",
+      "inherits": [
+        "overlay-tsan",
+        "mac-llvm-ninja-multi"
+      ]
+    },
+    {
+      "name": "mac-llvm-fuzz",
+      "displayName": "macOS Homebrew LLVM Fuzzing",
+      "inherits": [
+        "overlay-fuzz-clang",
+        "mac-llvm-ninja-multi"
+      ]
+    },
+    {
+      "name": "mac-xcode",
+      "displayName": "macOS Xcode (Multi-config)",
+      "description": "Xcode generator for macOS, tests on",
+      "generator": "Xcode",
+      "inherits": "base-common",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Darwin"
+      },
+      "cacheVariables": {
+        "CMAKE_CONFIGURATION_TYPES": "Debug;Release;RelWithDebInfo;MinSizeRel"
+      }
+    },
+    {
+      "name": "linux-ninja-multi",
+      "displayName": "Linux Ninja Multi",
+      "inherits": "base-ninja-multi",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
+    },
+    {
+      "name": "linux-ninja",
+      "displayName": "Linux Ninja",
+      "inherits": "base-ninja",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
+    },
+    {
+      "name": "linux-asan",
+      "displayName": "Linux Ninja Multi + ASAN",
+      "inherits": [
+        "overlay-asan",
+        "linux-ninja-multi"
+      ]
+    },
+    {
+      "name": "linux-tsan",
+      "displayName": "Linux Ninja Multi + TSAN",
+      "inherits": [
+        "overlay-tsan",
+        "linux-ninja-multi"
+      ]
+    },
+    {
+      "name": "linux-fuzz",
+      "displayName": "Linux Fuzzing (Clang)",
+      "inherits": [
+        "overlay-fuzz-clang",
+        "linux-ninja-multi"
+      ],
+      "condition": {
+        "type": "allOf",
+        "conditions": [
+          {
+            "type": "equals",
+            "lhs": "${hostSystemName}",
+            "rhs": "Linux"
+          }
+        ]
+      }
+    },
+    {
+      "name": "windows-vs2022-debug",
+      "hidden": true,
+      "inherits": "windows-vs2022",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "windows-vs2022-release",
+      "hidden": true,
+      "inherits": "windows-vs2022",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "windows-vs2022",
+      "displayName": "Windows VS2022 (Multi-config)",
+      "description": "Multi-config Visual Studio generator, tests on",
+      "generator": "Visual Studio 17 2022",
+      "inherits": "base-common",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
+      "cacheVariables": {
+        "CMAKE_CONFIGURATION_TYPES": "Debug;Release;RelWithDebInfo;MinSizeRel"
+      }
+    },
+    {
+      "name": "windows-vs2026-debug",
+      "hidden": true,
+      "inherits": "windows-vs2026",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "windows-vs2026-release",
+      "hidden": true,
+      "inherits": "windows-vs2026",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "windows-vs2026",
+      "displayName": "Windows VS2026 (Multi-config)",
+      "description": "Future Visual Studio multi-config generator, tests on",
+      "generator": "Visual Studio 18 2026",
+      "inherits": "base-common",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
+      "cacheVariables": {
+        "CMAKE_CONFIGURATION_TYPES": "Debug;Release;RelWithDebInfo;MinSizeRel"
+      }
+    },
+    {
+      "name": "windows-wsl-release",
+      "displayName": "Windows WSL (Ninja Release, threads off)",
+      "inherits": "base-ninja",
+      "binaryDir": "${sourceDir}/cmake-build/${presetName}",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "REACTORMQ_WITH_THREADS": "OFF"
+      }
+    },
+    {
+      "name": "windows-mingw-clang",
+      "displayName": "Windows MinGW Clang (Ninja)",
+      "inherits": "base-ninja-multi",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/cmake-build/${presetName}",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
+      "cacheVariables": {
+        "REACTORMQ_BUILD_TESTS": "ON"
+      }
+    },
+    {
+      "name": "windows-mingw-clang-bio",
+      "displayName": "Windows MinGW Clang (BIO TLS)",
+      "inherits": "windows-mingw-clang",
+      "cacheVariables": {
+        "REACTORMQ_SECURE_SOCKET_WITH_TLS": "OFF",
+        "REACTORMQ_SECURE_SOCKET_WITH_BIO_TLS": "ON"
+      }
+    },
+    {
+      "name": "playstation-prospero",
+      "displayName": "PlayStation 5 Prospero (Ninja)",
+      "description": "Console toolchain; tests disabled by console overlay",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/cmake-build/${presetName}",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": "$env{SCE_ROOT_DIR}/Prospero/Tools/CMake/PS5.cmake",
+        "REACTORMQ_BUILD_TESTS": "OFF",
+        "REACTORMQ_BUILD_FUZZERS": "OFF"
+      }
+    },
+    {
+      "name": "scarlett-vs2022",
+      "displayName": "Xbox Scarlett (VS2022 ClangCL)",
+      "description": "Console Visual Studio multi-config; tests disabled",
+      "generator": "Visual Studio 17 2022",
+      "binaryDir": "${sourceDir}/cmake-build/${presetName}",
+      "condition": {
+        "type": "equals",
+        "lhs": "0",
+        "rhs": "1"
+      },
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": "TODO",
+        "CMAKE_GENERATOR_PLATFORM": "Gaming.Xbox.Scarlett.x64",
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "REACTORMQ_BUILD_TESTS": "OFF",
+        "REACTORMQ_BUILD_FUZZERS": "OFF"
+      }
+    },
+    {
+      "name": "windows-visualstudio",
+      "displayName": "Windows VisualStudio (Ninja alt)",
+      "description": "Visual Studio 17 2022 single-config generation",
+      "inherits": "base-ninja",
+      "binaryDir": "${sourceDir}/cmake-build/${presetName}",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
+      "cacheVariables": {
+        "CMAKE_GENERATOR": "Visual Studio 17 2022"
+      }
+    },
+    {
+      "name": "windows-visualstudio-2026",
+      "displayName": "Windows VisualStudio 2026 (Ninja alt)",
+      "description": "Visual Studio 18 2026 single-config generation",
+      "inherits": "base-ninja",
+      "binaryDir": "${sourceDir}/cmake-build/${presetName}",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
+      "cacheVariables": {
+        "CMAKE_GENERATOR": "Visual Studio 18 2026"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "default",
+      "configurePreset": "base-ninja-multi",
+      "configuration": "Debug"
+    },
+    {
+      "name": "release",
+      "configurePreset": "base-ninja-multi",
+      "configuration": "Release"
+    },
+    {
+      "name": "mac-appleclang-debug",
+      "configurePreset": "mac-appleclang-ninja-multi",
+      "configuration": "Debug"
+    },
+    {
+      "name": "mac-appleclang-release",
+      "configurePreset": "mac-appleclang-ninja-multi",
+      "configuration": "Release"
+    },
+    {
+      "name": "mac-appleclang-asan-debug",
+      "configurePreset": "mac-appleclang-asan",
+      "configuration": "Debug"
+    },
+    {
+      "name": "mac-appleclang-tsan-debug",
+      "configurePreset": "mac-appleclang-tsan",
+      "configuration": "Debug"
+    },
+    {
+      "name": "mac-appleclang-fuzz-debug",
+      "configurePreset": "mac-appleclang-fuzz",
+      "configuration": "Debug",
+      "targets": ["fuzz_mqtt_codec", "fuzz_fixed_header", "fuzz_variable_byte_integer", "fuzz_publish_packet", "fuzz_connect_packet"]
+    },
+    {
+      "name": "mac-llvm-debug",
+      "configurePreset": "mac-llvm-ninja-multi",
+      "configuration": "Debug"
+    },
+    {
+      "name": "mac-llvm-release",
+      "configurePreset": "mac-llvm-ninja-multi",
+      "configuration": "Release"
+    },
+    {
+      "name": "mac-llvm-asan-debug",
+      "configurePreset": "mac-llvm-asan",
+      "configuration": "Debug"
+    },
+    {
+      "name": "mac-llvm-tsan-debug",
+      "configurePreset": "mac-llvm-tsan",
+      "configuration": "Debug"
+    },
+    {
+      "name": "mac-llvm-fuzz-debug",
+      "configurePreset": "mac-llvm-fuzz",
+      "configuration": "Debug",
+      "targets": ["fuzz_mqtt_codec", "fuzz_fixed_header", "fuzz_variable_byte_integer", "fuzz_publish_packet", "fuzz_connect_packet"]
+    },
+    {
+      "name": "mac-xcode-debug",
+      "configurePreset": "mac-xcode",
+      "configuration": "Debug"
+    },
+    {
+      "name": "mac-xcode-release",
+      "configurePreset": "mac-xcode",
+      "configuration": "Release"
+    },
+    {
+      "name": "linux-debug",
+      "configurePreset": "linux-ninja-multi",
+      "configuration": "Debug"
+    },
+    {
+      "name": "linux-asan-debug",
+      "configurePreset": "linux-asan",
+      "configuration": "Debug"
+    },
+    {
+      "name": "linux-tsan-debug",
+      "configurePreset": "linux-tsan",
+      "configuration": "Debug"
+    },
+    {
+      "name": "linux-fuzz-debug",
+      "configurePreset": "linux-fuzz",
+      "configuration": "Debug",
+      "targets": ["fuzz_mqtt_codec", "fuzz_fixed_header", "fuzz_variable_byte_integer", "fuzz_publish_packet", "fuzz_connect_packet"]
+    },
+    {
+      "name": "linux-debug-single",
+      "configurePreset": "linux-ninja",
+      "configuration": "Debug"
+    },
+    {
+      "name": "windows-vs2022-debug",
+      "configurePreset": "windows-vs2022",
+      "configuration": "Debug"
+    },
+    {
+      "name": "windows-vs2022-release",
+      "configurePreset": "windows-vs2022",
+      "configuration": "Release"
+    },
+    {
+      "name": "windows-vs2026-debug",
+      "configurePreset": "windows-vs2026",
+      "configuration": "Debug"
+    },
+    {
+      "name": "windows-vs2026-release",
+      "configurePreset": "windows-vs2026",
+      "configuration": "Release"
+    },
+    {
+      "name": "windows-mingw-debug",
+      "configurePreset": "windows-mingw-clang",
+      "configuration": "Debug"
+    },
+    {
+      "name": "windows-mingw-release",
+      "configurePreset": "windows-mingw-clang",
+      "configuration": "Release"
+    },
+    {
+      "name": "windows-mingw-bio-debug",
+      "configurePreset": "windows-mingw-clang-bio",
+      "configuration": "Debug"
+    },
+    {
+      "name": "windows-wsl-release-build",
+      "configurePreset": "windows-wsl-release",
+      "configuration": "Release"
+    },
+    {
+      "name": "prospero-debug",
+      "configurePreset": "playstation-prospero",
+      "configuration": "Debug"
+    },
+    {
+      "name": "scarlett-debug",
+      "configurePreset": "scarlett-vs2022",
+      "configuration": "Debug"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "default-tests",
+      "configurePreset": "base-ninja-multi",
+      "configuration": "Debug",
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error",
+        "stopOnFailure": true
+      }
+    },
+    {
+      "name": "mac-tests",
+      "configurePreset": "mac-appleclang-ninja-multi",
+      "configuration": "Debug",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Darwin"
+      },
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error",
+        "stopOnFailure": true
+      }
+    },
+    {
+      "name": "linux-tests",
+      "configurePreset": "linux-ninja-multi",
+      "configuration": "Debug",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      },
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error",
+        "stopOnFailure": true
+      }
+    },
+    {
+      "name": "windows-tests",
+      "configurePreset": "windows-vs2022",
+      "configuration": "Debug",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error",
+        "stopOnFailure": true
+      }
+    }
+  ],
+  "packagePresets": [
+    {
+      "name": "default",
+      "configurePreset": "base-ninja-multi",
+      "generators": [
+        "TGZ"
+      ]
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "default",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "base-ninja-multi"
+        },
+        {
+          "type": "build",
+          "name": "default"
+        },
+        {
+          "type": "test",
+          "name": "default-tests"
+        },
+        {
+          "type": "package",
+          "name": "default"
+        }
+      ]
+    }
+  ],
+  "vendor": {
+    "jetbrains.com/clion": {
+      "autoFormat": true
+    }
+  }
+}
